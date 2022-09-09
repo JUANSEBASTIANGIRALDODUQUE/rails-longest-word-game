@@ -13,6 +13,13 @@ class GamesController < ApplicationController
     @start_time = DateTime.strptime(params[:start_time], '%Y-%m-%d %H:%M:%S')
     @attempt = params[:game]
     @score = run_game(@attempt, @letters, @start_time, end_time)
+    if Rails.cache.read('score').nil?
+      Rails.cache.write('score', @score[:score])
+    else
+      old_score = Rails.cache.read('score')
+      Rails.cache.write('score', @score[:score] + old_score[:score])
+    end
+    @total = Rails.cache.read('score')
   end
 
   def run_game(attempt, grid, start_time, end_time)
@@ -35,6 +42,6 @@ class GamesController < ApplicationController
   end
 
   def word_in_grid(attempt, grid)
-    attempt.upcase.chars.all? { |z| attempt.upcase.count(z) <= grid.count(z) }
+    attempt.upcase.chars.all? { |z| attempt.upcase.count(z) <= grid.upcase.count(z) }
   end
 end
